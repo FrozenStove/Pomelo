@@ -1,0 +1,406 @@
+<div id="46hma2d7bp3-instruction"><h3>Overview</h3>
+
+    <p dir="auto">&nbsp;</p>
+    
+    <p dir="auto">(Important: if you haven't already, read&nbsp;<a href="https://gist.github.com/aseemk/89aaa72d4d60c5448307250ca0179f5c"><strong>this background doc</strong></a>! It teaches the basics of how credit cards work.)</p>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <p>Implement a&nbsp;<strong><code>summarize()</code></strong>&nbsp;function that takes as input a&nbsp;<strong>credit limit</strong>&nbsp;and a&nbsp;<strong>list of&nbsp;<em>events</em></strong>, and outputs a&nbsp;<strong>summary</strong>&nbsp;of the resulting&nbsp;<strong>available credit</strong>,&nbsp;<strong>payable balance</strong>, and&nbsp;<strong>pending+settled transactions</strong>.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>(You could imagine this function powering the home screen of a credit card app like Pomelo!)</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>The input will be a JSON string of an object with the following schema:</p>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <pre><code class="language-javascript">{
+      "creditLimit": number,
+      "events": [ // in chronological order, i.e. earlier events first
+        {
+          "eventType": string, // e.g. "TXN_AUTHED", etc.; see below
+          "eventTime": number, // the absolute value doesn't matter here, but relative ordering does
+          "txnId": string,
+          "amount": number // present for some event types, absent for others.
+                           // positive when it adds to the balance / uses credit, negative when the opposite.
+        }
+      ]
+    }</code></pre>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <p dir="auto">Your output should be a multi-line string of the form:</p>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <pre><code>Available credit: &lt;amount&gt;
+    Payable balance: &lt;amount&gt;
+    
+    Pending transactions:
+    &lt;id&gt;: &lt;amount&gt; @ time &lt;initial time&gt;
+    &lt;id&gt;: &lt;amount&gt; @ time &lt;initial time&gt;
+    ...
+    
+    Settled transactions:
+    &lt;id&gt;: &lt;amount&gt; @ time &lt;initial time&gt; (finalized @ time &lt;final time&gt;)
+    &lt;id&gt;: &lt;amount&gt; @ time &lt;initial time&gt; (finalized @ time &lt;final time&gt;)
+    &lt;id&gt;: &lt;amount&gt; @ time &lt;initial time&gt; (finalized @ time &lt;final time&gt;)</code></pre>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <p><code>&lt;initial time&gt;</code>&nbsp;corresponds to&nbsp;<code>TXN_AUTHED</code>&nbsp;time for transactions and&nbsp;<code>PAYMENT_INITIATED</code>&nbsp;time for payments, while&nbsp;<code>&lt;final time&gt;</code>&nbsp;corresponds to&nbsp;<code>TXN_SETTLED</code>&nbsp;time for transactions and&nbsp;<code>PAYMENT_POSTED</code>&nbsp;time for payments.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p><strong>Both lists of transactions</strong> should be ordered from newest to oldest by <strong>initial</strong> time. The pending list should show all pending transactions, while the settled list should show only the <strong><em>three</em></strong> most recent transactions based on <em>initial time</em>.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>All input amounts will be integers. All output amounts should also be formatted as integers (no decimal places) and as dollars, e.g.&nbsp;<code>$123</code>&nbsp;or&nbsp;<code>-$456</code>.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>End your output with no trailing newlines. (Most languages provide a&nbsp;<code>trim()</code>&nbsp;method to help here.)</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>You can assume the input will generally be valid (e.g. there won't be a&nbsp;<code>TXN_SETTLED</code>&nbsp;event before a corresponding&nbsp;<code>TXN_AUTHED</code>&nbsp;event). We won't test your code with invalid input, but we'd be happy to see good, defensive code if you choose to write and/or test it.</p>
+    
+    <p>&nbsp;</p>
+    
+    <h3 dir="auto" id="user-content-event-types" tabindex="-1">Event types</h3>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <p dir="auto">There are 6 different types of events:</p>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <ul dir="auto">
+        <li>
+    <code>TXN_AUTHED</code>: these correspond to a transaction authorization. Txn auth events have an ID, timestamp, and amount.</li>
+        <li>
+    <code>TXN_SETTLED</code>: these correspond to a previously authorized transaction settling. Txn settlement events specify&nbsp;<em>the same txn ID</em>&nbsp;as the corresponding auth event, but they have their own timestamp, and the amount can change.</li>
+        <li>
+    <code>TXN_AUTH_CLEARED</code>: these correspond to a previously authorized transaction being cleared. Txn cleared events specify the same txn ID as the corresponding auth event, too, and don't specify any amount.</li>
+        <li>
+    <code>PAYMENT_INITIATED</code>: these correspond to a payment being initiated. These events are similar to txn auth events.&nbsp;Payment amounts are always negative, since they lower the balance.</li>
+        <li>
+    <code>PAYMENT_POSTED</code>: these correspond to a payment posting. These events are similar to txn settled events, except they don't specify any amount, since payment amounts can't and don't change.</li>
+        <li>
+    <code>PAYMENT_CANCELED</code>: these correspond to a payment getting canceled. These events are similar to txn cleared events.</li>
+    </ul>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <h3 dir="auto" id="user-content-examples" tabindex="-1">Examples</h3>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <table>
+        <tbody>
+            <tr>
+                <th>Input</th>
+                <th>Output</th>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized:</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $877
+    Payable balance: $0
+    
+    Pending transactions:
+    t1: $123 @ time 1
+    
+    Settled transactions:</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized, then cleared:</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        },
+        {
+          "eventType": "TXN_AUTH_CLEARED",
+          "eventTime": 2,
+          "txnId": "t1"
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $1000
+    Payable balance: $0
+    
+    Pending transactions:
+    
+    Settled transactions:</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized, then settled (note amount changes! e.g. tip added):</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        },
+        {
+          "eventType": "TXN_SETTLED",
+          "eventTime": 2,
+          "txnId": "t1",
+          "amount": 456
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $544
+    Payable balance: $456
+    
+    Pending transactions:
+    
+    Settled transactions:
+    t1: $456 @ time 1 (finalized @ time 2)</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized, settled, and&nbsp;<em>begun</em>&nbsp;to be paid off:</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        },
+        {
+          "eventType": "TXN_SETTLED",
+          "eventTime": 2,
+          "txnId": "t1",
+          "amount": 456
+        },
+        {
+          "eventType": "PAYMENT_INITIATED",
+          "eventTime": 3,
+          "txnId": "p1",
+          "amount": -456
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $544
+    Payable balance: $0
+    
+    Pending transactions:
+    p1: -$456 @ time 3
+    
+    Settled transactions:
+    t1: $456 @ time 1 (finalized @ time 2)</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized, settled, and <em>begun</em>&nbsp;to be paid off, but the payment getting canceled:</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        },
+        {
+          "eventType": "TXN_SETTLED",
+          "eventTime": 2,
+          "txnId": "t1",
+          "amount": 456
+        },
+        {
+          "eventType": "PAYMENT_INITIATED",
+          "eventTime": 3,
+          "txnId": "p1",
+          "amount": -456
+        },
+        {
+          "eventType": "PAYMENT_CANCELED",
+          "eventTime": 4,
+          "txnId": "p1"
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $544
+    Payable balance: $456
+    
+    Pending transactions:
+    
+    Settled transactions:
+    t1: $456 @ time 1 (finalized @ time 2)</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">A single transaction getting authorized, settled, and&nbsp;<em>fully</em>&nbsp;paid off:</td>
+            </tr>
+            <tr valign="top">
+                <td>
+                <pre><code class="language-json">{
+      "creditLimit": 1000,
+      "events": [
+        {
+          "eventType": "TXN_AUTHED",
+          "eventTime": 1,
+          "txnId": "t1",
+          "amount": 123
+        },
+        {
+          "eventType": "TXN_SETTLED",
+          "eventTime": 2,
+          "txnId": "t1",
+          "amount": 456
+        },
+        {
+          "eventType": "PAYMENT_INITIATED",
+          "eventTime": 3,
+          "txnId": "p1",
+          "amount": -456
+        },
+        {
+          "eventType": "PAYMENT_POSTED",
+          "eventTime": 4,
+          "txnId": "p1"
+        }
+      ]
+    }</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+                <td>
+                <pre><code>Available credit: $1000
+    Payable balance: $0
+    
+    Pending transactions:
+    
+    Settled transactions:
+    p1: -$456 @ time 3 (finalized @ time 4)
+    t1: $456 @ time 1 (finalized @ time 2)</code></pre>
+    
+                <p>&nbsp;</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h3 dir="auto" tabindex="-1">&nbsp;</h3>
+    
+    <p dir="auto">These examples are also provided as programmatic test cases here.</p>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <h3 dir="auto" id="user-content-event-types" tabindex="-1">Bonus</h3>
+    
+    <p dir="auto">&nbsp;</p>
+    
+    <p>The above is all that's needed for completion and all that's tested by us.&nbsp;<em>You can be done</em>&nbsp;once you're satisfied!</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>If you're feeling inspired and&nbsp;<em>want</em>&nbsp;to go further (making a credit card app is fun, isn't it? =D), you're welcome to email additional code to us&nbsp;<em>outside of HackerRank</em>&nbsp;showing us where your inspiration took you. Just be sure to still&nbsp;<strong>submit your HackerRank solution first</strong>, before time runs out.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>Some ideas if they inspire you:</p>
+    
+    <p>&nbsp;</p>
+    
+    <ol>
+        <li>
+        <p>If you enjoy frontend work, build a simple&nbsp;<strong>web or mobile UI</strong>&nbsp;that renders this summary view nicely and beautifully. Even better if it simulates or lets you submit new events yourself, to test different cases.</p>
+        </li>
+        <li>
+        <p>If you enjoy backend work, build a simple&nbsp;<strong>web service</strong>&nbsp;that supports submitting new events and getting updated summaries via a&nbsp;<strong>REST API</strong>. Even better if it persists data to a&nbsp;<strong>database</strong>.</p>
+        </li>
+        <li>
+        <p>If you're not experienced with either but can figure out your language's stdin/stdout APIs, build a simple&nbsp;<strong>CLI/REPL</strong>&nbsp;that lets you keep submitting events and getting updated summaries back.</p>
+        </li>
+    </ol>
+    
+    <p>&nbsp;</p>
+    
+    <p>Whatever you do, please include screenshots or video recordings to show us what you created!</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>Don't feel constrained by these ideas, and feel free to apply your own creativity. Just know that we don't want or need you to spend any more time on this than you have and want to spend.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>Note, though, that you'll lose access to both this prompt and your code upon submission here in HackerRank. So be sure&nbsp;to <strong>save both this&nbsp;prompt and your code</strong>&nbsp;before submission.</p>
+    
+    <p>&nbsp;</p>
+    
+    <p>Thank you for your time and interest, and we look forward to seeing your work!</p>
+    </div>
