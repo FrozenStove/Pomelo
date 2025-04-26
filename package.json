@@ -1,0 +1,13 @@
+{
+  "name": "pomelo",
+  "version": "1.0.0",
+  "description": "Containerized TypeScript Express server with React frontend",
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "docker-compose build",
+    "start": "docker-compose up",
+    "dev": "docker-compose up --build"
+  },
+  "author": "",
+  "license": "ISC"
+}
