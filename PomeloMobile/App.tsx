@@ -28,7 +28,7 @@ type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
+const Section = ({children, title}: SectionProps): React.JSX.Element => {
   const isDarkMode = useColorScheme() === 'dark';
   return (
     <View style={styles.sectionContainer}>
@@ -52,9 +52,9 @@ function Section({children, title}: SectionProps): React.JSX.Element {
       </Text>
     </View>
   );
-}
+};
 
-function App(): React.JSX.Element {
+const App = (): React.JSX.Element => {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -70,25 +70,24 @@ function App(): React.JSX.Element {
    * You can read more about it here:
    * https://github.com/react-native-community/discussions-and-proposals/discussions/827
    */
-  const safePadding = '5%';
 
   return (
-    <View style={backgroundStyle}>
+    <View style={[styles.container, backgroundStyle]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
+      <ScrollView style={backgroundStyle}>
+        <View style={styles.headerContainer}>
+          <Header />
         </View>
         <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
+          style={[
+            styles.contentContainer,
+            {
+              backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            },
+          ]}>
           <Section title="Step One">
             Edit <Text style={styles.highlight}>App.tsx</Text> to change this
             screen and then come back to see your edits.
@@ -107,9 +106,19 @@ function App(): React.JSX.Element {
       </ScrollView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    paddingRight: '5%',
+  },
+  contentContainer: {
+    paddingHorizontal: '5%',
+    paddingBottom: '5%',
+  },
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
