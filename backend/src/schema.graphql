@@ -1,0 +1,11 @@
+type CreditSummary {
+  totalCredit: Float!
+  availableCredit: Float!
+  usedCredit: Float!
+  creditLimit: Float!
+  lastUpdated: String!
+}
+
+type Query {
+  creditSummary: CreditSummary!
+}
