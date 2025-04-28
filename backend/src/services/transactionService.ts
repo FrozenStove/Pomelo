@@ -2,6 +2,7 @@ import { EventType, Transaction } from "../models/transactionModel";
 import { TransactionError } from "../utils/errorUtils";
 import creditService from "./creditService";
 import { testTransactions } from "./pseudoDb";
+import transactionStatusService from "./transactionStatusService";
 
 type TransactionService = {
   getTransactionsByUserId: (req: {
@@ -63,7 +64,7 @@ class TransactionServiceImpl implements TransactionService {
     testTransactions.push(transaction);
   }
 
-  txnAuthed({ txnId, userId, amount }: Transaction) {
+  txnAuthed({ txnId, userId, amount, ...args }: Transaction) {
     const availableCredit = creditService.getAvailableCreditByUserId(userId);
 
     if (!amount) {
@@ -83,92 +84,90 @@ class TransactionServiceImpl implements TransactionService {
 
     creditService.updateAvailableCredit(userId, availableCredit - amount);
 
+    // Update transaction status
+    transactionStatusService.addTransactionStatus({
+      txnId,
+      userId,
+      amount,
+      ...args,
+    });
+
     console.log(`${txnId} successfully authorized`);
   }
 
   txnSettled({ txnId, userId, amount, time }: Transaction) {
-    const authedTxn = this.getTransactionByTxnId(txnId).find(
-      (t) => t.type === EventType.TXN_AUTHED
-    );
+    const priorTransactionStatus =
+      transactionStatusService.getTransactionStatusByTxnId(txnId);
 
-    if (!authedTxn) {
+    if (
+      !priorTransactionStatus ||
+      priorTransactionStatus.lastEventType !== EventType.TXN_AUTHED
+    ) {
       throw new TransactionError(
         txnId,
         EventType.TXN_SETTLED,
         `No authorized transaction found`
       );
     }
-    if (time < authedTxn.time) {
+    if (time < priorTransactionStatus.initialTime) {
       throw new TransactionError(
         txnId,
         EventType.TXN_SETTLED,
         `Transaction settled before authorized`
       );
     }
-    if (!authedTxn.amount) {
-      throw new TransactionError(
-        txnId,
-        EventType.TXN_SETTLED,
-        `authorized with invalid amount ${amount}`
-      );
-    }
 
-    if (amount && amount !== authedTxn.amount) {
+    if (amount && amount !== priorTransactionStatus.amount) {
       console.log(
-        `${txnId} has an updated amount from [${authedTxn.amount}] to [${amount}]`
+        `${txnId} has an updated amount from [${priorTransactionStatus.amount}] to [${amount}]`
       );
       const availableCredit = creditService.getAvailableCreditByUserId(userId);
       creditService.updateAvailableCredit(
         userId,
-        availableCredit + authedTxn.amount - amount
+        availableCredit + priorTransactionStatus.amount - amount
       );
     }
     const payableBalance = creditService.getPayableBalanceByUserId(userId);
 
     creditService.updatePayableBalance(
       userId,
-      payableBalance + (amount || authedTxn.amount)
+      payableBalance + (amount || priorTransactionStatus.amount)
     );
 
     console.log(`${txnId} successfully settled`);
   }
 
   txnCleared({ txnId, userId, amount, time }: Transaction) {
-    const authedTxn = this.getTransactionByTxnId(txnId).find(
-      (t) => t.type === EventType.TXN_AUTHED
-    );
+    const priorTransactionStatus =
+      transactionStatusService.getTransactionStatusByTxnId(txnId);
 
-    if (!authedTxn) {
+    if (
+      !priorTransactionStatus ||
+      priorTransactionStatus.lastEventType !== EventType.TXN_AUTHED
+    ) {
       throw new TransactionError(
         txnId,
         EventType.TXN_AUTH_CLEARED,
         `No authorized transaction found`
       );
     }
-    if (time < authedTxn.time) {
+    if (time < priorTransactionStatus.initialTime) {
       throw new TransactionError(
         txnId,
         EventType.TXN_AUTH_CLEARED,
-        `Transaction settled before authorized`
-      );
-    }
-    if (!authedTxn.amount) {
-      throw new TransactionError(
-        txnId,
-        EventType.TXN_AUTH_CLEARED,
-        `authorized with invalid amount ${amount}`
+        `Transaction cleared before authorized`
       );
     }
 
     const availableCredit = creditService.getAvailableCreditByUserId(userId);
     creditService.updateAvailableCredit(
       userId,
-      availableCredit + authedTxn.amount
+      availableCredit + priorTransactionStatus.amount
     );
     console.log(`${txnId} successfully cleared`);
   }
 
-  paymentInitiated({ txnId, userId, amount }: Transaction) {
+  paymentInitiated({ txnId, userId, amount, ...args }: Transaction) {
     if (!amount || amount > 0) {
       throw new TransactionError(
         txnId,
@@ -187,29 +186,31 @@ class TransactionServiceImpl implements TransactionService {
 
     creditService.updatePayableBalance(userId, payableBalance + amount);
 
+    transactionStatusService.addTransactionStatus({
+      txnId,
+      userId,
+      amount,
+      ...args,
+    });
+
     console.log(`${txnId} successfully initiated`);
   }
 
   paymentPosted({ txnId, userId, time }: Transaction) {
-    const initTxn = this.getTransactionByTxnId(txnId).find(
-      (txn) => txn.type === EventType.PAYMENT_INITIATED
-    );
+    const priorTransactionStatus =
+      transactionStatusService.getTransactionStatusByTxnId(txnId);
 
-    if (!initTxn) {
+    if (
+      !priorTransactionStatus ||
+      priorTransactionStatus.lastEventType !== EventType.PAYMENT_INITIATED
+    ) {
       throw new TransactionError(
         txnId,
         EventType.PAYMENT_POSTED,
         `payment posted without being initiated`
       );
     }
-    if (!initTxn.amount) {
-      throw new TransactionError(
-        txnId,
-        EventType.PAYMENT_POSTED,
-        `initiated payment has an invalid amount`
-      );
-    }
-    if (time < initTxn.time) {
+    if (time < priorTransactionStatus.initialTime) {
       throw new TransactionError(
         txnId,
         EventType.PAYMENT_POSTED,
@@ -219,31 +220,26 @@ class TransactionServiceImpl implements TransactionService {
     const availableCredit = creditService.getAvailableCreditByUserId(userId);
     creditService.updateAvailableCredit(
       userId,
-      availableCredit - initTxn.amount
+      availableCredit - priorTransactionStatus.amount
     );
     console.log(`${txnId} successfully posted`);
   }
 
   paymentCancelled({ txnId, userId, time }: Transaction) {
-    const initTxn = this.getTransactionByTxnId(txnId).find(
-      (txn) => txn.type === EventType.PAYMENT_INITIATED
-    );
+    const priorTransactionStatus =
+      transactionStatusService.getTransactionStatusByTxnId(txnId);
 
-    if (!initTxn) {
+    if (
+      !priorTransactionStatus ||
+      priorTransactionStatus.lastEventType !== EventType.PAYMENT_INITIATED
+    ) {
       throw new TransactionError(
         txnId,
         EventType.PAYMENT_CANCELED,
         `payment cancelled without being initiated`
       );
     }
-    if (!initTxn.amount) {
-      throw new TransactionError(
-        txnId,
-        EventType.PAYMENT_CANCELED,
-        `initiated payment has an invalid amount`
-      );
-    }
-    if (time < initTxn.time) {
+    if (time < priorTransactionStatus.initialTime) {
       throw new TransactionError(
         txnId,
         EventType.PAYMENT_CANCELED,
@@ -252,7 +248,10 @@ class TransactionServiceImpl implements TransactionService {
     }
 
     const payableBalance = creditService.getPayableBalanceByUserId(userId);
-    creditService.updatePayableBalance(userId, payableBalance - initTxn.amount);
+    creditService.updatePayableBalance(
+      userId,
+      payableBalance - priorTransactionStatus.amount
+    );
 
     console.log(`${txnId} successfully cancelled`);
   }

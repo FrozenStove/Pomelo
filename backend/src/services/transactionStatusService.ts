@@ -17,6 +17,18 @@ class TransactionStatusServiceImpl implements TransactionStatusService {
     return testTransactionStatuses.find((t) => t.id === txnId);
   }
 
+  addTransactionStatus(transaction: Transaction): void {
+    const newStatus: TransactionStatus = {
+      id: transaction.txnId,
+      userId: transaction.userId,
+      amount: transaction.amount ?? 0,
+      lastEventType: transaction.type,
+      status: Status.PENDING,
+      initialTime: transaction.time,
+    };
+    testTransactionStatuses.push(newStatus);
+  }
+
   updateTransactionStatus(transaction: Transaction): void {
     const existingStatus = this.getTransactionStatusByTxnId(transaction.txnId);
 
