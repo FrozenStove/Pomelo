@@ -20,7 +20,7 @@ describe("Transaction Service", () => {
       // Add some test transactions
       const txn1: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "get_user_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 100,
@@ -28,7 +28,7 @@ describe("Transaction Service", () => {
       };
       const txn2: Transaction = {
         id: 2,
-        txnId: "txn2",
+        txnId: "get_user_txn2",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
@@ -36,7 +36,7 @@ describe("Transaction Service", () => {
       };
       const txn3: Transaction = {
         id: 3,
-        txnId: "txn3",
+        txnId: "get_user_txn3",
         userId: 456,
         type: EventType.TXN_AUTHED,
         amount: 200,
@@ -49,8 +49,8 @@ describe("Transaction Service", () => {
         userId: 123,
       });
       expect(userTransactions.length).toBe(2);
-      expect(userTransactions[0].txnId).toBe("txn1");
-      expect(userTransactions[1].txnId).toBe("txn2");
+      expect(userTransactions[0].txnId).toBe("get_user_txn1");
+      expect(userTransactions[1].txnId).toBe("get_user_txn2");
     });
 
     it("should return empty array for user with no transactions", () => {
@@ -66,7 +66,7 @@ describe("Transaction Service", () => {
       // Add some test transactions
       const txn1: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "get_txn_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 100,
@@ -74,7 +74,7 @@ describe("Transaction Service", () => {
       };
       const txn2: Transaction = {
         id: 2,
-        txnId: "txn1",
+        txnId: "get_txn_txn1",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
@@ -83,7 +83,8 @@ describe("Transaction Service", () => {
 
       testTransactions.push(txn1, txn2);
 
-      const txnResults = transactionService.getTransactionByTxnId("txn1");
+      const txnResults =
+        transactionService.getTransactionByTxnId("get_txn_txn1");
       expect(txnResults?.length).toBe(2);
       expect(txnResults?.[0].type).toBe(EventType.TXN_AUTHED);
       expect(txnResults?.[1].type).toBe(EventType.TXN_SETTLED);
@@ -100,7 +101,7 @@ describe("Transaction Service", () => {
     it("should add a valid TXN_AUTHED transaction", () => {
       const txn: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "add_auth_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 100,
@@ -110,14 +111,14 @@ describe("Transaction Service", () => {
       transactionService.addTransaction(txn);
 
       expect(testTransactions.length).toBe(1);
-      expect(testTransactions[0].txnId).toBe("txn1");
+      expect(testTransactions[0].txnId).toBe("add_auth_txn1");
       expect(creditService.getAvailableCreditByUserId(123)).toBe(900); // 1000 - 100
     });
 
     it("should throw error for TXN_AUTHED with amount exceeding available credit", () => {
       const txn: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "add_auth_error_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 1500, // More than available credit (1000)
@@ -135,7 +136,7 @@ describe("Transaction Service", () => {
       // First add an auth transaction
       const authTxn: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "add_settle_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 100,
@@ -146,7 +147,7 @@ describe("Transaction Service", () => {
       // Then add a settlement transaction
       const settleTxn: Transaction = {
         id: 2,
-        txnId: "txn1",
+        txnId: "add_settle_txn1",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
@@ -161,7 +162,7 @@ describe("Transaction Service", () => {
     it("should throw error for TXN_SETTLED without prior TXN_AUTHED", () => {
       const txn: Transaction = {
         id: 1,
-        txnId: "txn5",
+        txnId: "add_settle_error_txn1",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
@@ -178,7 +179,7 @@ describe("Transaction Service", () => {
       // First add auth and settlement transactions to create a payable balance
       const authTxn: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "add_payment_txn1",
         userId: 123,
         type: EventType.TXN_AUTHED,
         amount: 100,
@@ -186,7 +187,7 @@ describe("Transaction Service", () => {
       };
       const settleTxn: Transaction = {
         id: 2,
-        txnId: "txn1",
+        txnId: "add_payment_txn1",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
@@ -198,7 +199,7 @@ describe("Transaction Service", () => {
       // Then add a payment transaction
       const paymentTxn: Transaction = {
         id: 3,
-        txnId: "payment1",
+        txnId: "add_payment_payment1",
         userId: 123,
         type: EventType.PAYMENT_INITIATED,
         amount: -50, // Negative amount for payment
@@ -213,7 +214,7 @@ describe("Transaction Service", () => {
     it("should throw error for PAYMENT_INITIATED with positive amount", () => {
       const txn: Transaction = {
         id: 1,
-        txnId: "payment1",
+        txnId: "add_payment_error_txn1",
         userId: 123,
         type: EventType.PAYMENT_INITIATED,
         amount: 50, // Positive amount (should be negative)
