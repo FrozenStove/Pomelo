@@ -144,7 +144,7 @@ class TransactionServiceImpl implements TransactionService {
     });
   }
 
-  txnCleared({ txnId, userId, amount, time }: Transaction) {
+  txnCleared({ txnId, userId, amount, time, ...args }: Transaction) {
     const priorTransactionStatus =
       transactionStatusService.getTransactionStatusByTxnId(txnId);
 
@@ -172,6 +172,13 @@ class TransactionServiceImpl implements TransactionService {
       availableCredit + priorTransactionStatus.amount
     );
     console.log(`${txnId} successfully cleared`);
+    transactionStatusService.updateTransactionStatus({
+      txnId,
+      userId,
+      amount: amount || priorTransactionStatus.amount,
+      time,
+      ...args,
+    });
   }
 
   paymentInitiated({ txnId, userId, amount, ...args }: Transaction) {
