@@ -2,7 +2,10 @@ import express from "express";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-import { typeDefs, resolvers } from "./schema";
+import { loadFilesSync } from "@graphql-tools/load-files";
+import { makeExecutableSchema } from "@graphql-tools/schema";
+import { resolvers } from "./resolvers/resolvers";
+import path from "path";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,10 +13,20 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Create Apollo Server
-const server = new ApolloServer({
+// Load GraphQL schema from file
+const typeDefs = loadFilesSync(path.join(__dirname, "graphql"), {
+  extensions: ["graphql"],
+});
+
+// Create executable schema
+const schema = makeExecutableSchema({
   typeDefs,
   resolvers,
+});
+
+// Create Apollo Server
+const server = new ApolloServer({
+  schema,
 });
 
 // Start the server
@@ -21,7 +34,15 @@ async function startServer() {
   await server.start();
 
   // Apply Apollo middleware
-  app.use("/graphql", expressMiddleware(server));
+  app.use(
+    "/graphql",
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        // You can add context here if needed
+        return {};
+      },
+    })
+  );
 
   // Basic health check endpoint
   app.get("/api/health", (req, res) => {

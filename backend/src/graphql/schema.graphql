@@ -1,0 +1,42 @@
+type CreditSummary {
+  availableCredit: Int!
+  payableBalance: Int!
+  settledTransactions: [Transaction!]!
+  pendingTransactions: [Transaction!]!
+}
+
+type Transaction {
+  id: ID!
+  amount: Int!
+  initialTime: Int!
+  finalTime: Int
+}
+
+input TransactionInput {
+  txnId: ID!
+  amount: Int
+  eventTime: Int!
+}
+
+enum EventType {
+  TXN_AUTHED
+  TXN_SETTLED
+  TXN_AUTH_CLEARED
+  PAYMENT_INITIATED
+  PAYMENT_POSTED
+  PAYMENT_CANCELED
+}
+
+type Query {
+  creditSummary(userId: ID!): CreditSummary
+  transactionHistory(userId: ID!): [Transaction!]!
+}
+
+type Mutation {
+  initializeCreditCard(userId: ID!, creditLimit: Int!): CreditSummary!
+  processTransactionEvent(
+    userId: ID!
+    eventType: EventType!
+    input: TransactionInput!
+  ): Transaction!
+}
