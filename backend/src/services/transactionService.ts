@@ -95,7 +95,7 @@ class TransactionServiceImpl implements TransactionService {
     console.log(`${txnId} successfully authorized`);
   }
 
-  txnSettled({ txnId, userId, amount, time }: Transaction) {
+  txnSettled({ txnId, userId, amount, time, ...args }: Transaction) {
     const priorTransactionStatus =
       transactionStatusService.getTransactionStatusByTxnId(txnId);
 
@@ -135,6 +135,13 @@ class TransactionServiceImpl implements TransactionService {
     );
 
     console.log(`${txnId} successfully settled`);
+    transactionStatusService.updateTransactionStatus({
+      txnId,
+      userId,
+      amount: amount || priorTransactionStatus.amount,
+      time,
+      ...args,
+    });
   }
 
   txnCleared({ txnId, userId, amount, time }: Transaction) {

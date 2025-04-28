@@ -47,10 +47,12 @@ class TransactionStatusServiceImpl implements TransactionStatusService {
             existingStatus.amount = transaction.amount;
           }
           existingStatus.lastEventType = EventType.TXN_SETTLED;
+          existingStatus.finalTime = transaction.time;
           break;
         case EventType.TXN_AUTH_CLEARED:
           existingStatus.status = Status.CANCELLED;
           existingStatus.lastEventType = EventType.TXN_AUTH_CLEARED;
+          existingStatus.finalTime = transaction.time;
           break;
       }
     } else {
