@@ -18,9 +18,9 @@ import {EventType, eventTypeLabels} from '../models/transactionModel';
 
 export const AddTransactionScreen = () => {
   const navigation = useNavigation();
-  const {user} = useUser();
+  const {user, refetchCreditSummary} = useUser();
   const [amount, setAmount] = useState('');
-  const [eventType, setEventType] = useState<EventType>(EventType.TXN_SETTLED);
+  const [eventType, setEventType] = useState<EventType>(EventType.TXN_AUTHED);
   const [txnId, setTxnId] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -34,13 +34,13 @@ export const AddTransactionScreen = () => {
     },
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!amount || !eventType) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    addTransaction({
+    await addTransaction({
       variables: {
         userId: user?.id,
         eventType,
@@ -49,6 +49,7 @@ export const AddTransactionScreen = () => {
         amount: parseInt(amount, 10),
       },
     });
+    refetchCreditSummary();
   };
 
   return (

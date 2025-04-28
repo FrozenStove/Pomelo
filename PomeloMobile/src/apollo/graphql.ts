@@ -25,7 +25,7 @@ export const ADD_TRANSACTION = gql`
   mutation ProcessTransactionEvent(
     $userId: ID!
     $eventType: EventType!
-    $txnId: String!
+    $txnId: ID!
     $eventTime: Int!
     $amount: Int!
   ) {

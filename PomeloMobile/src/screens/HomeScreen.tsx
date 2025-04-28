@@ -125,7 +125,10 @@ export const HomeScreen = () => {
                       Amount: ${txn.amount.toFixed(2)}
                     </Text>
                     <Text style={styles.transactionTime}>
-                      Started: {new Date(txn.initialTime).toLocaleString()}
+                      Started: {txn.initialTime}
+                    </Text>
+                    <Text style={styles.transactionId}>
+                      Transaction ID: {txn.id}
                     </Text>
                   </View>
                 ))
@@ -143,10 +146,10 @@ export const HomeScreen = () => {
                       Amount: ${txn.amount.toFixed(2)}
                     </Text>
                     <Text style={styles.transactionTime}>
-                      Settled:{' '}
-                      {txn.finalTime
-                        ? new Date(txn.finalTime).toLocaleString()
-                        : 'N/A'}
+                      Started: {txn.initialTime}
+                    </Text>
+                    <Text style={styles.transactionTime}>
+                      Settled: {txn.finalTime}
                     </Text>
                     <Text style={styles.transactionId}>
                       Transaction ID: {txn.id}

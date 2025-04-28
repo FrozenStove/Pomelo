@@ -47,7 +47,9 @@ export const UserProvider = ({children}: {children: ReactNode}) => {
   }, [userData]);
 
   const refetchCreditSummary = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      return;
+    }
     const result = await refetch();
     if (result.data) {
       setCreditSummary(result.data.creditSummary);
