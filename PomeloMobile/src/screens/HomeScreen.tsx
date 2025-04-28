@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -17,10 +18,28 @@ import {ErrorDisplay} from '../components/ErrorDisplay';
 export const HomeScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {user, setUser, creditSummary, userLoading, userError} = useUser();
+  const {
+    user,
+    setUser,
+    creditSummary,
+    userLoading,
+    userError,
+    refetchCreditSummary,
+  } = useUser();
   const [newUserId, setNewUserId] = useState('');
   const [dismissedError, setDismissedError] = useState(false);
-  console.log('user', user);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchCreditSummary();
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchCreditSummary]);
 
   const handleSetUser = () => {
     console.log('newUserId', newUserId);
@@ -61,7 +80,16 @@ export const HomeScreen = () => {
         />
       )}
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007AFF']} // Android
+            tintColor="#007AFF" // iOS
+          />
+        }>
         <View style={styles.header}>
           <Text style={styles.title}>Credit Summary</Text>
           <Text style={styles.subtitle}>

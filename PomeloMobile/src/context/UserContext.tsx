@@ -19,6 +19,7 @@ interface UserContextType {
   creditSummary: CreditSummary | null;
   userLoading: boolean;
   userError: ApolloError | undefined;
+  refetchCreditSummary: () => Promise<any>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -29,13 +30,15 @@ export const UserProvider = ({children}: {children: ReactNode}) => {
     null,
   );
 
-  const {loading: userLoading, error: userError, data: userData} = useQuery(
-    GET_USER_CREDIT_SUMMARY,
-    {
-      variables: {userId: user?.id},
-      skip: !user?.id,
-    },
-  );
+  const {
+    loading: userLoading,
+    error: userError,
+    data: userData,
+    refetch,
+  } = useQuery(GET_USER_CREDIT_SUMMARY, {
+    variables: {userId: user?.id},
+    skip: !user?.id,
+  });
 
   useEffect(() => {
     if (userData) {
@@ -43,9 +46,24 @@ export const UserProvider = ({children}: {children: ReactNode}) => {
     }
   }, [userData]);
 
+  const refetchCreditSummary = async () => {
+    if (!user?.id) return;
+    const result = await refetch();
+    if (result.data) {
+      setCreditSummary(result.data.creditSummary);
+    }
+  };
+
   return (
     <UserContext.Provider
-      value={{user, setUser, creditSummary, userLoading, userError}}>
+      value={{
+        user,
+        setUser,
+        creditSummary,
+        userLoading,
+        userError,
+        refetchCreditSummary,
+      }}>
       {children}
     </UserContext.Provider>
   );
