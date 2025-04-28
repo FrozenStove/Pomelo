@@ -1,3 +1,5 @@
+import { CreditTransactionSummary } from "./userModel";
+
 export enum EventType {
   TXN_AUTHED = "TXN_AUTHED",
   TXN_SETTLED = "TXN_SETTLED",
@@ -37,8 +39,8 @@ export type SummaryInput = {
 export type CreditSummary = {
   availableCredit: number;
   payableBalance: number;
-  pendingTransactions: Transaction[];
-  settledTransactions: Transaction[];
+  pendingTransactions: CreditTransactionSummary[];
+  settledTransactions: CreditTransactionSummary[];
 };
 
 export type TransactionHistory = Omit<CreditEvent, "txnId">;

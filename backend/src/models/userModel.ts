@@ -8,3 +8,10 @@ export type User = {
   availableCredit: number;
   payableBalance: number;
 };
+
+export type CreditTransactionSummary = {
+  id: string;
+  amount: number;
+  initialTime: number;
+  finalTime?: number;
+};

@@ -1,21 +1,63 @@
+import {
+  CreditSummary,
+  EventType,
+  Transaction,
+} from "../models/transactionModel";
 import { User } from "../models/userModel";
 import { testCreditLimits } from "./pseudoDb";
+import transactionStatusService from "./transactionStatusService";
 
 type CreditService = {
-  //   getCreditSummary: (userId: string) => CreditSummary | null;
+  getCreditSummary: (userId: number) => CreditSummary | null;
   //   getTransactionHistory: (userId: string) => Transaction[];
   getCreditLimitByUserId: (userId: number) => number;
   getPayableBalanceByUserId: (userId: number) => number;
   getAvailableCreditByUserId: (userId: number) => number;
   updateCreditLimit: (userId: number, creditLimit: number) => void;
   updatePayableBalance: (userId: number, payableBalance: number) => void;
-  updateAvailableCredit: (userId: number, availableCredit: number) => void;
 };
 
 class CreditServiceImpl implements CreditService {
-  //   getCreditSummary: (userId: string) => {
-  //     return creditCardService.getCreditSummary(userId);
-  //   },
+  getCreditSummary(userId: number): CreditSummary | null {
+    const availableCredit = this.getAvailableCreditByUserId(userId);
+    const payableBalance = this.getPayableBalanceByUserId(userId);
+
+    if (!availableCredit) {
+      return null;
+    }
+
+    const transactionStatuses =
+      transactionStatusService.getTransactionStatusByUserId(userId);
+
+    const settledTransactions = transactionStatuses
+      .filter((t) => t.status === "settled")
+      .map((t) => ({
+        id: t.id,
+        amount: t.amount,
+        initialTime: t.initialTime,
+        finalTime: t.finalTime,
+      }));
+
+    const pendingTransactions = transactionStatuses
+      .filter((t) => t.status === "pending")
+      .map((t) => ({
+        id: t.id,
+        amount: t.amount,
+        initialTime: t.initialTime,
+        finalTime: t.finalTime,
+      }));
+
+    return {
+      availableCredit: availableCredit,
+      payableBalance: payableBalance,
+      settledTransactions: settledTransactions.sort(
+        (a, b) => b.initialTime - a.initialTime
+      ),
+      pendingTransactions: pendingTransactions.sort(
+        (a, b) => b.initialTime - a.initialTime
+      ),
+    };
+  }
 
   getCreditLimitByUserId(userId: number) {
     return (
@@ -63,5 +105,4 @@ class CreditServiceImpl implements CreditService {
 }
 
 const creditService = new CreditServiceImpl();
-
 export default creditService;
