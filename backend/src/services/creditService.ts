@@ -8,8 +8,14 @@ import { testCreditLimits } from "./pseudoDb";
 import transactionStatusService from "./transactionStatusService";
 
 type CreditService = {
+  addNewUser: ({
+    userId,
+    creditLimit,
+  }: {
+    userId: number;
+    creditLimit: number;
+  }) => void;
   getCreditSummary: (userId: number) => CreditSummary | null;
-  //   getTransactionHistory: (userId: string) => Transaction[];
   getCreditLimitByUserId: (userId: number) => number;
   getPayableBalanceByUserId: (userId: number) => number;
   getAvailableCreditByUserId: (userId: number) => number;
@@ -18,6 +24,18 @@ type CreditService = {
 };
 
 class CreditServiceImpl implements CreditService {
+  addNewUser({ userId, creditLimit }: { userId: number; creditLimit: number }) {
+    testCreditLimits.push({
+      id: userId,
+      username: `user_${userId}`,
+      email: `user_${userId}@example.com`,
+      password: `password_${userId}`,
+      name: `User ${userId}`,
+      creditLimit: creditLimit,
+      availableCredit: creditLimit,
+      payableBalance: 0,
+    });
+  }
   getCreditSummary(userId: number): CreditSummary | null {
     const availableCredit = this.getAvailableCreditByUserId(userId);
     const payableBalance = this.getPayableBalanceByUserId(userId);

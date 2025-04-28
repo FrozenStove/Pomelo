@@ -28,8 +28,14 @@ export const resolvers = {
       _: any,
       { userId, creditLimit }: { userId: string; creditLimit: number }
     ) => {
-      creditService.updateCreditLimit(parseInt(userId), creditLimit);
-      creditService.updateAvailableCredit(parseInt(userId), creditLimit);
+      const currentSummary = creditService.getCreditSummary(parseInt(userId));
+      if (currentSummary) {
+        throw new Error("User already exists");
+      }
+      creditService.addNewUser({
+        userId: parseInt(userId),
+        creditLimit: creditLimit,
+      });
       return creditService.getCreditSummary(parseInt(userId));
     },
     processTransactionEvent: async (
