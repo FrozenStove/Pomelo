@@ -161,7 +161,7 @@ describe("Transaction Service", () => {
     it("should throw error for TXN_SETTLED without prior TXN_AUTHED", () => {
       const txn: Transaction = {
         id: 1,
-        txnId: "txn1",
+        txnId: "txn5",
         userId: 123,
         type: EventType.TXN_SETTLED,
         amount: 100,
