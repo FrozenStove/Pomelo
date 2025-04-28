@@ -37,6 +37,7 @@ class CreditServiceImpl implements CreditService {
     });
   }
   getCreditSummary(userId: number): CreditSummary | null {
+    console.log(`getCreditSummary for userId: ${userId}`);
     const availableCredit = this.getAvailableCreditByUserId(userId);
     const payableBalance = this.getPayableBalanceByUserId(userId);
 
