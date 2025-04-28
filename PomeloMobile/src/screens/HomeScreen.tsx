@@ -87,6 +87,47 @@ export const HomeScreen = () => {
               </View>
             </View>
 
+            {/* Pending Transactions Section */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Pending Transactions</Text>
+              {creditSummary?.pendingTransactions?.length ? (
+                creditSummary.pendingTransactions.map(txn => (
+                  <View key={txn.id} style={styles.transactionItem}>
+                    <Text style={styles.transactionAmount}>
+                      Amount: ${txn.amount.toFixed(2)}
+                    </Text>
+                    <Text style={styles.transactionTime}>
+                      Started: {new Date(txn.initialTime).toLocaleString()}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.label}>No pending transactions</Text>
+              )}
+            </View>
+
+            {/* Settled Transactions Section */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Settled Transactions</Text>
+              {creditSummary?.settledTransactions?.length ? (
+                creditSummary.settledTransactions.map(txn => (
+                  <View key={txn.id} style={styles.transactionItem}>
+                    <Text style={styles.transactionAmount}>
+                      Amount: ${txn.amount.toFixed(2)}
+                    </Text>
+                    <Text style={styles.transactionTime}>
+                      Settled:{' '}
+                      {txn.finalTime
+                        ? new Date(txn.finalTime).toLocaleString()
+                        : 'N/A'}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.label}>No settled transactions</Text>
+              )}
+            </View>
+
             {/* <View style={styles.cardsSection}>
               <Text style={styles.sectionTitle}>Your Credit Cards</Text>
               {creditSummary?.creditCards?.map((card: any) => (
@@ -277,5 +318,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  transactionItem: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  transactionTime: {
+    fontSize: 14,
+    color: '#666',
   },
 });
