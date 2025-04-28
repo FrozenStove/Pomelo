@@ -106,7 +106,6 @@ export const HomeScreen = () => {
               )}
             </View>
 
-            {/* Settled Transactions Section */}
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Settled Transactions</Text>
               {creditSummary?.settledTransactions?.length ? (
@@ -121,29 +120,15 @@ export const HomeScreen = () => {
                         ? new Date(txn.finalTime).toLocaleString()
                         : 'N/A'}
                     </Text>
+                    <Text style={styles.transactionId}>
+                      Transaction ID: {txn.id}
+                    </Text>
                   </View>
                 ))
               ) : (
                 <Text style={styles.label}>No settled transactions</Text>
               )}
             </View>
-
-            {/* <View style={styles.cardsSection}>
-              <Text style={styles.sectionTitle}>Your Credit Cards</Text>
-              {creditSummary?.creditCards?.map((card: any) => (
-                <View key={card.id} style={styles.cardItem}>
-                  <Text style={styles.cardName}>{card.name}</Text>
-                  <View style={styles.cardDetails}>
-                    <Text style={styles.cardBalance}>
-                      Balance: ${card.balance.toFixed(2)}
-                    </Text>
-                    <Text style={styles.cardLimit}>
-                      Limit: ${card.limit.toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View> */}
           </>
         ) : (
           <View style={styles.noUserContainer}>
@@ -318,6 +303,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  transactionId: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
   },
   transactionItem: {
     backgroundColor: '#f9f9f9',

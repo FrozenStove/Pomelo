@@ -7,33 +7,22 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {useMutation, gql} from '@apollo/client';
+import {useMutation} from '@apollo/client';
 import {useUser} from '../context/UserContext';
-
-const ADD_TRANSACTION = gql`
-  mutation AddTransaction($input: AddTransactionInput!) {
-    addTransaction(input: $input) {
-      id
-      amount
-      description
-      date
-      creditCard {
-        id
-        name
-        balance
-      }
-    }
-  }
-`;
+import {ADD_TRANSACTION} from '../apollo/graphql';
+import {EventType, eventTypeLabels} from '../models/transactionModel';
 
 export const AddTransactionScreen = () => {
   const navigation = useNavigation();
   const {user} = useUser();
   const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedCardId, setSelectedCardId] = useState('');
+  const [eventType, setEventType] = useState<EventType>(EventType.TXN_SETTLED);
+  const [txnId, setTxnId] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [addTransaction, {loading}] = useMutation(ADD_TRANSACTION, {
     onCompleted: () => {
@@ -46,19 +35,18 @@ export const AddTransactionScreen = () => {
   });
 
   const handleSubmit = () => {
-    if (!amount || !description || !selectedCardId) {
+    if (!amount || !eventType) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     addTransaction({
       variables: {
-        input: {
-          amount: parseFloat(amount),
-          description,
-          creditCardId: selectedCardId,
-          userId: user?.id,
-        },
+        userId: user?.id,
+        eventType,
+        txnId: txnId || `txn_${Date.now()}`,
+        eventTime: Math.floor(Date.now() / 1000),
+        amount: parseInt(amount, 10),
       },
     });
   };
@@ -66,6 +54,10 @@ export const AddTransactionScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.form}>
+        <Text style={styles.label}>
+          Current User: {user?.id ? user.id : 'Not Set'}
+        </Text>
+
         <Text style={styles.label}>Amount</Text>
         <TextInput
           style={styles.input}
@@ -75,20 +67,46 @@ export const AddTransactionScreen = () => {
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>Description</Text>
-        <TextInput
+        <Text style={styles.label}>Transaction Type</Text>
+        <TouchableOpacity
           style={styles.input}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Enter description"
-        />
+          onPress={() => setModalVisible(true)}>
+          <Text>{eventTypeLabels[eventType]}</Text>
+        </TouchableOpacity>
 
-        <Text style={styles.label}>Select Credit Card</Text>
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View style={styles.modalContainer}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Select Transaction Type</Text>
+                  {Object.values(EventType).map(type => (
+                    <TouchableOpacity
+                      key={type}
+                      style={styles.modalItem}
+                      onPress={() => {
+                        setEventType(type);
+                        setModalVisible(false);
+                      }}>
+                      <Text>{eventTypeLabels[type]}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <Text style={styles.label}>Transaction ID</Text>
         <TextInput
           style={styles.input}
-          value={selectedCardId}
-          onChangeText={setSelectedCardId}
-          placeholder="Enter credit card ID"
+          value={txnId}
+          onChangeText={setTxnId}
+          placeholder="Enter transaction ID (optional)"
         />
 
         <TouchableOpacity
@@ -140,5 +158,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  transactionId: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
+  },
+  transactionAmount: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
+  },
+  transactionTime: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
+  },
+  transactionItem: {
+    marginBottom: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
 });

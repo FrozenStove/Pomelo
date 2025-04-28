@@ -20,3 +20,21 @@ export const GET_USER_CREDIT_SUMMARY = gql`
     }
   }
 `;
+
+export const ADD_TRANSACTION = gql`
+  mutation ProcessTransactionEvent(
+    $userId: ID!
+    $eventType: EventType!
+    $txnId: String!
+    $eventTime: Int!
+    $amount: Int!
+  ) {
+    processTransactionEvent(
+      userId: $userId
+      eventType: $eventType
+      input: {txnId: $txnId, eventTime: $eventTime, amount: $amount}
+    ) {
+      amount
+    }
+  }
+`;

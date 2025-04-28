@@ -1,12 +1,12 @@
-import { CreditTransactionSummary } from "./userModel";
+import {CreditTransactionSummary} from './userModel';
 
 export enum EventType {
-  TXN_AUTHED = "TXN_AUTHED",
-  TXN_SETTLED = "TXN_SETTLED",
-  TXN_AUTH_CLEARED = "TXN_AUTH_CLEARED",
-  PAYMENT_INITIATED = "PAYMENT_INITIATED",
-  PAYMENT_POSTED = "PAYMENT_POSTED",
-  PAYMENT_CANCELED = "PAYMENT_CANCELED",
+  TXN_AUTHED = 'TXN_AUTHED',
+  TXN_SETTLED = 'TXN_SETTLED',
+  TXN_AUTH_CLEARED = 'TXN_AUTH_CLEARED',
+  PAYMENT_INITIATED = 'PAYMENT_INITIATED',
+  PAYMENT_POSTED = 'PAYMENT_POSTED',
+  PAYMENT_CANCELED = 'PAYMENT_CANCELED',
 }
 
 export type Transaction = {
@@ -43,4 +43,13 @@ export type CreditSummary = {
   settledTransactions: CreditTransactionSummary[];
 };
 
-export type TransactionHistory = Omit<CreditEvent, "txnId">;
+export type TransactionHistory = Omit<CreditEvent, 'txnId'>;
+
+export const eventTypeLabels: Record<EventType, string> = {
+  [EventType.TXN_AUTHED]: 'Authorized',
+  [EventType.TXN_SETTLED]: 'Settled',
+  [EventType.TXN_AUTH_CLEARED]: 'Authorization Cleared',
+  [EventType.PAYMENT_INITIATED]: 'Payment Initiated',
+  [EventType.PAYMENT_POSTED]: 'Payment Posted',
+  [EventType.PAYMENT_CANCELED]: 'Payment Canceled',
+};
