@@ -1,6 +1,28 @@
 import { Transaction } from "../models/transactionModel";
 import { EventType } from "../models/transactionModel";
+import { TransactionStatus, Status } from "../models/transactionStatusModel";
 import { User } from "../models/userModel";
+
+export const testTransactionStatuses: TransactionStatus[] = [
+  {
+    id: "1",
+    userId: 123,
+    amount: 200,
+    lastEventType: EventType.TXN_SETTLED,
+    status: Status.SETTLED,
+    initialTime: 1,
+    finalTime: 2,
+  },
+  {
+    id: "2",
+    userId: 789,
+    amount: 300,
+    lastEventType: EventType.TXN_SETTLED,
+    status: Status.SETTLED,
+    initialTime: 2,
+    finalTime: 3,
+  },
+];
 
 export const testCreditLimits: User[] = [
   {
