@@ -8,11 +8,16 @@ export enum EventType {
 }
 
 export type Transaction = {
-  id: string;
-  amount: number;
-  initialTime: number;
-  finalTime?: number;
+  // unique id for the transaction
+  id: number;
+  // non-unique id for the transaction
+  txnId: string;
+  userId: number;
+  amount?: number;
+  type: EventType;
+  time: number;
 };
+// finalTime?: number;
 
 export type TransactionInput = {
   eventTime: number;
