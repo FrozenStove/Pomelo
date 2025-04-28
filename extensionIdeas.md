@@ -7,3 +7,12 @@ Ways to improve and extend this concept:
 5. automatically apply interest daily for any balances past due
 6. add encryption to users when logging in
 7. add oauth support
+
+
+## Backend modifications:
+1. improve the summary model
+2. accept a transaction
+3. accept a payment
+4. return a summary
+5. set credit limits and payable balance in a db of sort. set it in memory for now
+6. the data being sent back should not be a string, but a an object. the front end should then parse it into a usable string or front end stuff
