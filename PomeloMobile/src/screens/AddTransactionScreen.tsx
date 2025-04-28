@@ -108,6 +108,7 @@ export const AddTransactionScreen = () => {
           value={txnId}
           onChangeText={setTxnId}
           placeholder="Enter transaction ID (optional)"
+          autoCapitalize="none"
         />
 
         <TouchableOpacity
