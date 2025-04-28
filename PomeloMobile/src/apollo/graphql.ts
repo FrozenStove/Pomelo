@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import {gql} from '@apollo/client';
 
 export const GET_USER_CREDIT_SUMMARY = gql`
   query GetUserCreditSummary($userId: ID!) {

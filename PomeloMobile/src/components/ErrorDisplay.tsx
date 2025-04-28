@@ -41,7 +41,9 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
     }
   }, [error]);
 
-  if (!error) return null;
+  if (!error) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
