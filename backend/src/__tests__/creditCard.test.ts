@@ -213,3 +213,313 @@ describe("Credit Card GraphQL API", () => {
     });
   });
 });
+
+describe("Transaction Lifecycle", () => {
+  const lifecycleCreditLimit = 2000;
+  const lifecycleTimestamp = Math.floor(Date.now() / 1000);
+
+  it("should track credit card state through transaction lifecycle", async () => {
+    const singleTestUserId = 1456;
+    const testAmount = 500;
+    const txnId = "lifecycle-single-txn-1";
+
+    // Initialize a new credit card for this test
+    const initMutation = `
+      mutation InitializeCreditCard($userId: ID!, $creditLimit: Int!) {
+        initializeCreditCard(userId: $userId, creditLimit: $creditLimit) {
+          availableCredit
+          payableBalance
+          settledTransactions {
+            id
+            amount
+          }
+          pendingTransactions {
+            id
+            amount
+          }
+        }
+      }
+    `;
+
+    await executeGraphQL<{ initializeCreditCard: CreditSummary }>(
+      schema,
+      initMutation,
+      {
+        userId: singleTestUserId.toString(),
+        creditLimit: lifecycleCreditLimit,
+      }
+    );
+
+    // Step 1: Verify initial state
+    const initialQuery = `
+      query GetCreditSummary($userId: ID!) {
+        creditSummary(userId: $userId) {
+          availableCredit
+          payableBalance
+          settledTransactions {
+            id
+            amount
+            initialTime
+          }
+          pendingTransactions {
+            id
+            amount
+            initialTime
+          }
+        }
+      }
+    `;
+
+    const initialResult = await executeGraphQL<{
+      creditSummary: CreditSummary;
+    }>(schema, initialQuery, { userId: singleTestUserId.toString() });
+
+    expect(initialResult.errors).toBeUndefined();
+    expect(initialResult.data?.creditSummary.availableCredit).toBe(
+      lifecycleCreditLimit
+    );
+    expect(initialResult.data?.creditSummary.payableBalance).toBe(0);
+    expect(initialResult.data?.creditSummary.settledTransactions).toHaveLength(
+      0
+    );
+    expect(initialResult.data?.creditSummary.pendingTransactions).toHaveLength(
+      0
+    );
+
+    // Step 2: Authorize a transaction
+    const authMutation = `
+      mutation ProcessTransaction(
+        $userId: ID!
+        $eventType: EventType!
+        $input: TransactionInput!
+      ) {
+        processTransactionEvent(
+          userId: $userId
+          eventType: $eventType
+          input: $input
+        ) {
+          id
+          amount
+          initialTime
+        }
+      }
+    `;
+
+    const authResult = await executeGraphQL<{
+      processTransactionEvent: CreditTransactionSummary;
+    }>(schema, authMutation, {
+      userId: singleTestUserId.toString(),
+      eventType: "TXN_AUTHED",
+      input: {
+        txnId: txnId,
+        amount: testAmount,
+        eventTime: lifecycleTimestamp,
+      },
+    });
+
+    expect(authResult.errors).toBeUndefined();
+    expect(authResult.data?.processTransactionEvent.amount).toBe(testAmount);
+
+    // Step 3: Verify state after authorization
+    const afterAuthResult = await executeGraphQL<{
+      creditSummary: CreditSummary;
+    }>(schema, initialQuery, { userId: singleTestUserId.toString() });
+
+    expect(afterAuthResult.errors).toBeUndefined();
+    expect(afterAuthResult.data?.creditSummary.availableCredit).toBe(
+      lifecycleCreditLimit - testAmount
+    );
+    expect(afterAuthResult.data?.creditSummary.payableBalance).toBe(0);
+    expect(
+      afterAuthResult.data?.creditSummary.settledTransactions
+    ).toHaveLength(0);
+    expect(
+      afterAuthResult.data?.creditSummary.pendingTransactions
+    ).toHaveLength(1);
+    expect(
+      afterAuthResult.data?.creditSummary.pendingTransactions[0].amount
+    ).toBe(testAmount);
+
+    // Step 4: Settle the transaction
+    const settleResult = await executeGraphQL<{
+      processTransactionEvent: CreditTransactionSummary;
+    }>(schema, authMutation, {
+      userId: singleTestUserId.toString(),
+      eventType: "TXN_SETTLED",
+      input: {
+        txnId: txnId,
+        amount: testAmount,
+        eventTime: lifecycleTimestamp + 3600,
+      },
+    });
+
+    expect(settleResult.errors).toBeUndefined();
+    expect(settleResult.data?.processTransactionEvent.amount).toBe(testAmount);
+
+    // Step 5: Verify final state after settlement
+    const finalResult = await executeGraphQL<{ creditSummary: CreditSummary }>(
+      schema,
+      initialQuery,
+      { userId: singleTestUserId.toString() }
+    );
+
+    expect(finalResult.errors).toBeUndefined();
+    expect(finalResult.data?.creditSummary.availableCredit).toBe(
+      lifecycleCreditLimit - testAmount
+    );
+    expect(finalResult.data?.creditSummary.payableBalance).toBe(testAmount);
+    expect(finalResult.data?.creditSummary.settledTransactions).toHaveLength(1);
+    expect(finalResult.data?.creditSummary.settledTransactions[0].amount).toBe(
+      testAmount
+    );
+    expect(finalResult.data?.creditSummary.pendingTransactions).toHaveLength(0);
+  });
+
+  it("should handle multiple transactions correctly", async () => {
+    const multiTestUserId = 1789;
+    const amounts = [300, 200, 400];
+    const txnIds = [
+      "lifecycle-multi-txn-1",
+      "lifecycle-multi-txn-2",
+      "lifecycle-multi-txn-3",
+    ];
+
+    // Initialize a new credit card for this test
+    const initMutation = `
+      mutation InitializeCreditCard($userId: ID!, $creditLimit: Int!) {
+        initializeCreditCard(userId: $userId, creditLimit: $creditLimit) {
+          availableCredit
+          payableBalance
+          settledTransactions {
+            id
+            amount
+          }
+          pendingTransactions {
+            id
+            amount
+          }
+        }
+      }
+    `;
+
+    await executeGraphQL<{ initializeCreditCard: CreditSummary }>(
+      schema,
+      initMutation,
+      {
+        userId: multiTestUserId.toString(),
+        creditLimit: lifecycleCreditLimit,
+      }
+    );
+
+    // Authorize multiple transactions
+    for (let i = 0; i < amounts.length; i++) {
+      const authMutation = `
+        mutation ProcessTransaction(
+          $userId: ID!
+          $eventType: EventType!
+          $input: TransactionInput!
+        ) {
+          processTransactionEvent(
+            userId: $userId
+            eventType: $eventType
+            input: $input
+          ) {
+            id
+            amount
+            initialTime
+          }
+        }
+      `;
+
+      await executeGraphQL<{
+        processTransactionEvent: CreditTransactionSummary;
+      }>(schema, authMutation, {
+        userId: multiTestUserId.toString(),
+        eventType: "TXN_AUTHED",
+        input: {
+          txnId: txnIds[i],
+          amount: amounts[i],
+          eventTime: lifecycleTimestamp + i,
+        },
+      });
+    }
+
+    // Verify state with multiple pending transactions
+    const pendingQuery = `
+      query GetCreditSummary($userId: ID!) {
+        creditSummary(userId: $userId) {
+          availableCredit
+          payableBalance
+          pendingTransactions {
+            id
+            amount
+          }
+        }
+      }
+    `;
+
+    const pendingResult = await executeGraphQL<{
+      creditSummary: CreditSummary;
+    }>(schema, pendingQuery, { userId: multiTestUserId.toString() });
+
+    expect(pendingResult.errors).toBeUndefined();
+    expect(pendingResult.data?.creditSummary.availableCredit).toBe(
+      lifecycleCreditLimit - amounts.reduce((a, b) => a + b, 0)
+    );
+    expect(pendingResult.data?.creditSummary.pendingTransactions).toHaveLength(
+      3
+    );
+    expect(
+      pendingResult.data?.creditSummary.pendingTransactions.map((t) => t.amount)
+    ).toEqual(expect.arrayContaining(amounts));
+
+    // Settle all transactions
+    for (let i = 0; i < amounts.length; i++) {
+      const settleMutation = `
+        mutation ProcessTransaction(
+          $userId: ID!
+          $eventType: EventType!
+          $input: TransactionInput!
+        ) {
+          processTransactionEvent(
+            userId: $userId
+            eventType: $eventType
+            input: $input
+          ) {
+            id
+            amount
+            initialTime
+          }
+        }
+      `;
+
+      await executeGraphQL<{
+        processTransactionEvent: CreditTransactionSummary;
+      }>(schema, settleMutation, {
+        userId: multiTestUserId.toString(),
+        eventType: "TXN_SETTLED",
+        input: {
+          txnId: txnIds[i],
+          amount: amounts[i],
+          eventTime: lifecycleTimestamp + i + 3600,
+        },
+      });
+    }
+
+    // Verify final state
+    const finalResult = await executeGraphQL<{ creditSummary: CreditSummary }>(
+      schema,
+      pendingQuery,
+      { userId: multiTestUserId.toString() }
+    );
+
+    expect(finalResult.errors).toBeUndefined();
+    expect(finalResult.data?.creditSummary.availableCredit).toBe(
+      lifecycleCreditLimit - amounts.reduce((a, b) => a + b, 0)
+    );
+    expect(finalResult.data?.creditSummary.payableBalance).toBe(
+      amounts.reduce((a, b) => a + b, 0)
+    );
+    expect(finalResult.data?.creditSummary.pendingTransactions).toHaveLength(0);
+  });
+});
