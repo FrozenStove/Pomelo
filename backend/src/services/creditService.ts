@@ -30,7 +30,7 @@ class CreditServiceImpl implements CreditService {
       transactionStatusService.getTransactionStatusByUserId(userId);
 
     const settledTransactions = transactionStatuses
-      .filter((t) => t.status === "settled")
+      .filter((t) => t.lastEventType === EventType.TXN_SETTLED)
       .map((t) => ({
         id: t.id,
         amount: t.amount,
@@ -39,7 +39,7 @@ class CreditServiceImpl implements CreditService {
       }));
 
     const pendingTransactions = transactionStatuses
-      .filter((t) => t.status === "pending")
+      .filter((t) => t.lastEventType === EventType.TXN_AUTHED)
       .map((t) => ({
         id: t.id,
         amount: t.amount,
