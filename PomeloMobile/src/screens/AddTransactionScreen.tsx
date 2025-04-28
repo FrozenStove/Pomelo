@@ -49,7 +49,7 @@ export const AddTransactionScreen = () => {
         amount: parseInt(amount, 10),
       },
     });
-    refetchCreditSummary();
+    await refetchCreditSummary();
   };
 
   return (

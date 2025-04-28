@@ -50,9 +50,13 @@ export const UserProvider = ({children}: {children: ReactNode}) => {
     if (!user?.id) {
       return;
     }
-    const result = await refetch();
-    if (result.data) {
-      setCreditSummary(result.data.creditSummary);
+    try {
+      const result = await refetch();
+      if (result.data) {
+        setCreditSummary(result.data.creditSummary);
+      }
+    } catch (error) {
+      console.error('Error refetching credit summary:', error);
     }
   };
 
