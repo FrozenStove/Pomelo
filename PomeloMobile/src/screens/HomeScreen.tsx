@@ -1,93 +1,116 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useQuery, gql} from '@apollo/client';
 import {useUser} from '../context/UserContext';
 import {RootStackParamList} from '../types/navigation';
-
-const GET_USER_CREDIT_SUMMARY = gql`
-  query GetUserCreditSummary($userId: ID!) {
-    user(id: $userId) {
-      id
-      name
-      creditCards {
-        id
-        name
-        balance
-        limit
-      }
-      totalBalance
-      totalLimit
-    }
-  }
-`;
+import {ErrorDisplay} from '../components/ErrorDisplay';
 
 export const HomeScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {user} = useUser();
+  const {user, setUser, creditSummary, userLoading, userError} = useUser();
+  const [newUserId, setNewUserId] = useState('');
+  const [dismissedError, setDismissedError] = useState(false);
+  console.log('user', user);
 
-  const {loading, error, data} = useQuery(GET_USER_CREDIT_SUMMARY, {
-    variables: {userId: user?.id},
-    skip: !user?.id,
-  });
+  const handleSetUser = () => {
+    console.log('newUserId', newUserId);
+    if (!newUserId) {
+      Alert.alert('Error', 'Please enter a user ID');
+      return;
+    }
 
-  if (loading) {
+    setUser({
+      id: newUserId,
+    });
+    setNewUserId('');
+  };
+
+  if (userLoading) {
     return <Text style={styles.text}>Loading...</Text>;
   }
-  if (error) {
-    return <Text style={styles.text}>Error: {error.message}</Text>;
-  }
-
-  const creditSummary = data?.user;
 
   return (
     <View style={styles.container}>
+      <View style={styles.userSelector}>
+        <TextInput
+          style={styles.userInput}
+          value={newUserId}
+          onChangeText={setNewUserId}
+          placeholder="Enter user ID"
+          keyboardType="default"
+        />
+        <TouchableOpacity style={styles.setUserButton} onPress={handleSetUser}>
+          <Text style={styles.setUserButtonText}>Set User</Text>
+        </TouchableOpacity>
+      </View>
+
+      {userError && !dismissedError && (
+        <ErrorDisplay
+          error={userError}
+          onDismiss={() => setDismissedError(true)}
+        />
+      )}
+
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>Credit Summary</Text>
-          <Text style={styles.subtitle}>Welcome, {creditSummary?.name}</Text>
+          <Text style={styles.subtitle}>
+            Current userId = {user?.id || 'Not Set'}
+          </Text>
         </View>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Overall Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.label}>Total Balance:</Text>
-            <Text style={styles.value}>
-              ${creditSummary?.totalBalance.toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.label}>Total Limit:</Text>
-            <Text style={styles.value}>
-              ${creditSummary?.totalLimit.toFixed(2)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.cardsSection}>
-          <Text style={styles.sectionTitle}>Your Credit Cards</Text>
-          {creditSummary?.creditCards.map((card: any) => (
-            <View key={card.id} style={styles.cardItem}>
-              <Text style={styles.cardName}>{card.name}</Text>
-              <View style={styles.cardDetails}>
-                <Text style={styles.cardBalance}>
-                  Balance: ${card.balance.toFixed(2)}
+        {user?.id ? (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Overall Summary</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.label}>Available Credit:</Text>
+                <Text style={styles.value}>
+                  ${creditSummary?.availableCredit?.toFixed(2) || '0.00'}
                 </Text>
-                <Text style={styles.cardLimit}>
-                  Limit: ${card.limit.toFixed(2)}
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.label}>Payable Balance:</Text>
+                <Text style={styles.value}>
+                  ${creditSummary?.payableBalance?.toFixed(2) || '0.00'}
                 </Text>
               </View>
             </View>
-          ))}
-        </View>
+
+            {/* <View style={styles.cardsSection}>
+              <Text style={styles.sectionTitle}>Your Credit Cards</Text>
+              {creditSummary?.creditCards?.map((card: any) => (
+                <View key={card.id} style={styles.cardItem}>
+                  <Text style={styles.cardName}>{card.name}</Text>
+                  <View style={styles.cardDetails}>
+                    <Text style={styles.cardBalance}>
+                      Balance: ${card.balance.toFixed(2)}
+                    </Text>
+                    <Text style={styles.cardLimit}>
+                      Limit: ${card.limit.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View> */}
+          </>
+        ) : (
+          <View style={styles.noUserContainer}>
+            <Text style={styles.noUserText}>
+              Please set a user ID to view credit summary
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.buttonContainer}>
@@ -110,6 +133,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  userSelector: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  userInput: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  setUserButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  setUserButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   scrollView: {
     flex: 1,
@@ -218,5 +267,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+  },
+  noUserContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noUserText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });

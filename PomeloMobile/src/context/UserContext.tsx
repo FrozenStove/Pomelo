@@ -1,23 +1,51 @@
-import React, {createContext, useContext, useState, ReactNode} from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
+import {CreditSummary} from '../models/transactionModel';
+import {ApolloError, useQuery} from '@apollo/client';
+import {GET_USER_CREDIT_SUMMARY} from '../apollo/graphql';
 
 interface User {
   id: string;
-  name: string;
-  email: string;
 }
 
 interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
+  creditSummary: CreditSummary | null;
+  userLoading: boolean;
+  userError: ApolloError | undefined;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({children}: {children: ReactNode}) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>({id: '123'});
+  const [creditSummary, setCreditSummary] = useState<CreditSummary | null>(
+    null,
+  );
+
+  const {loading: userLoading, error: userError, data: userData} = useQuery(
+    GET_USER_CREDIT_SUMMARY,
+    {
+      variables: {userId: user?.id},
+      skip: !user?.id,
+    },
+  );
+
+  useEffect(() => {
+    if (userData) {
+      setCreditSummary(userData.creditSummary);
+    }
+  }, [userData]);
 
   return (
-    <UserContext.Provider value={{user, setUser}}>
+    <UserContext.Provider
+      value={{user, setUser, creditSummary, userLoading, userError}}>
       {children}
     </UserContext.Provider>
   );
