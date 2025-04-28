@@ -164,7 +164,7 @@ describe("Credit Card GraphQL API", () => {
       const result = await executeGraphQL<{
         initializeCreditCard: CreditSummary;
       }>(schema, mutation, {
-        userId: testUserId,
+        userId: 234,
         creditLimit: testCreditLimit,
       });
 
