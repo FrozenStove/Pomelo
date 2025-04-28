@@ -38,3 +38,12 @@ export const ADD_TRANSACTION = gql`
     }
   }
 `;
+
+export const INITIALIZE_CREDIT_CARD = gql`
+  mutation InitializeCreditCard($userId: ID!, $creditLimit: Int!) {
+    initializeCreditCard(userId: $userId, creditLimit: $creditLimit) {
+      availableCredit
+      payableBalance
+    }
+  }
+`;

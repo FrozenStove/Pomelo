@@ -9,69 +9,64 @@ import {
   Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {useMutation, gql} from '@apollo/client';
+import {useMutation} from '@apollo/client';
 import {useUser} from '../context/UserContext';
+import {INITIALIZE_CREDIT_CARD} from '../apollo/graphql';
 
-const ADD_CARD = gql`
-  mutation AddCard($input: AddCardInput!) {
-    addCard(input: $input) {
-      id
-      name
-      balance
-      limit
-    }
-  }
-`;
-
-export const AddCardScreen = () => {
+export const InitializeCreditCardScreen = () => {
   const navigation = useNavigation();
-  const {user} = useUser();
-  const [name, setName] = useState('');
-  const [limit, setLimit] = useState('');
+  const {setUser, refetchCreditSummary} = useUser();
+  const [creditLimit, setCreditLimit] = useState('');
+  const [newUserId, setNewUserId] = useState('');
 
-  const [addCard, {loading}] = useMutation(ADD_CARD, {
-    onCompleted: () => {
-      Alert.alert('Success', 'Credit card added successfully');
-      navigation.goBack();
+  const [initializeCreditCard, {loading}] = useMutation(
+    INITIALIZE_CREDIT_CARD,
+    {
+      onCompleted: () => {
+        Alert.alert('Success', 'Credit card initialized successfully');
+        navigation.goBack();
+      },
+      onError: error => {
+        Alert.alert('Error', error.message);
+      },
     },
-    onError: error => {
-      Alert.alert('Error', error.message);
-    },
-  });
+  );
 
-  const handleSubmit = () => {
-    if (!name || !limit) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleSubmit = async () => {
+    if (!creditLimit || !newUserId) {
+      Alert.alert('Error', 'Please enter both credit limit and user ID');
       return;
     }
 
-    addCard({
+    // Update the current user to the new user ID
+    setUser({id: newUserId});
+
+    await initializeCreditCard({
       variables: {
-        input: {
-          name,
-          limit: parseFloat(limit),
-          userId: user?.id,
-        },
+        userId: newUserId,
+        creditLimit: parseInt(creditLimit, 10),
       },
     });
+    await refetchCreditSummary();
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Card Name</Text>
+        <Text style={styles.label}>User ID</Text>
         <TextInput
           style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter card name"
+          value={newUserId}
+          onChangeText={setNewUserId}
+          placeholder="Enter user ID"
+          autoCapitalize="none"
         />
 
         <Text style={styles.label}>Credit Limit</Text>
         <TextInput
           style={styles.input}
-          value={limit}
-          onChangeText={setLimit}
+          value={creditLimit}
+          onChangeText={setCreditLimit}
           placeholder="Enter credit limit"
           keyboardType="numeric"
         />
@@ -81,7 +76,7 @@ export const AddCardScreen = () => {
           onPress={handleSubmit}
           disabled={loading}>
           <Text style={styles.buttonText}>
-            {loading ? 'Adding...' : 'Add Card'}
+            {loading ? 'Initializing...' : 'Initialize Credit Card'}
           </Text>
         </TouchableOpacity>
       </View>

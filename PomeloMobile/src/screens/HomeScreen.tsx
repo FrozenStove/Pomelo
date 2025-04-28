@@ -178,8 +178,8 @@ export const HomeScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('AddCard')}>
-          <Text style={styles.buttonText}>Add Card</Text>
+          onPress={() => navigation.navigate('InitializeCreditCard')}>
+          <Text style={styles.buttonText}>Init Card</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -306,6 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    paddingBottom: 50,
   },
   button: {
     flex: 1,

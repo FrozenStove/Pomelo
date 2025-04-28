@@ -13,7 +13,7 @@ import {client} from './src/apollo/client';
 import {UserProvider} from './src/context/UserContext';
 import {HomeScreen} from './src/screens/HomeScreen';
 import {AddTransactionScreen} from './src/screens/AddTransactionScreen';
-import {AddCardScreen} from './src/screens/AddCardScreen';
+import {InitializeCreditCardScreen} from './src/screens/InitializeCreditCardScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,18 +52,9 @@ const App = () => {
               }}
             />
             <Stack.Screen
-              name="AddCard"
-              component={AddCardScreen}
-              options={{
-                title: 'Add Card',
-                headerStyle: {
-                  backgroundColor: '#007AFF',
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
-              }}
+              name="InitializeCreditCard"
+              component={InitializeCreditCardScreen}
+              options={{title: 'Initialize Credit Card'}}
             />
           </Stack.Navigator>
         </NavigationContainer>
