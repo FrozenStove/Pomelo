@@ -1,11 +1,11 @@
 type CreditSummary {
   availableCredit: Int!
   payableBalance: Int!
-  settledTransactions: [Transaction!]!
-  pendingTransactions: [Transaction!]!
+  settledTransactions: [CreditTransactionSummary!]!
+  pendingTransactions: [CreditTransactionSummary!]!
 }
 
-type Transaction {
+type CreditTransactionSummary {
   id: ID!
   amount: Int!
   initialTime: Int!
@@ -29,7 +29,7 @@ enum EventType {
 
 type Query {
   creditSummary(userId: ID!): CreditSummary
-  transactionHistory(userId: ID!): [Transaction!]!
+  transactionHistory(userId: ID!): [CreditTransactionSummary!]!
 }
 
 type Mutation {
@@ -38,5 +38,5 @@ type Mutation {
     userId: ID!
     eventType: EventType!
     input: TransactionInput!
-  ): Transaction!
+  ): CreditTransactionSummary!
 }

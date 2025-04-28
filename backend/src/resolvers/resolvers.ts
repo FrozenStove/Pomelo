@@ -10,9 +10,17 @@ export const resolvers = {
       return creditService.getCreditSummary(parseInt(userId));
     },
     transactionHistory: async (_: any, { userId }: { userId: string }) => {
-      return transactionService.getTransactionsByUserId({
+      const transactions = transactionService.getTransactionsByUserId({
         userId: parseInt(userId),
       });
+
+      // Map the transactions to match the GraphQL schema
+      return transactions.map((transaction) => ({
+        id: transaction.txnId,
+        amount: transaction.amount || 0,
+        initialTime: transaction.time,
+        finalTime: transaction.time, // For now, using the same time
+      }));
     },
   },
   Mutation: {
@@ -21,6 +29,7 @@ export const resolvers = {
       { userId, creditLimit }: { userId: string; creditLimit: number }
     ) => {
       creditService.updateCreditLimit(parseInt(userId), creditLimit);
+      creditService.updateAvailableCredit(parseInt(userId), creditLimit);
       return creditService.getCreditSummary(parseInt(userId));
     },
     processTransactionEvent: async (
