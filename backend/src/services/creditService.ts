@@ -1,37 +1,5 @@
 import { User } from "../models/userModel";
-
-const testCreditLimits: User[] = [
-  {
-    id: 123,
-    username: "user1",
-    email: "user1@example.com",
-    password: "password1",
-    creditLimit: 1000,
-    availableCredit: 1000,
-    payableBalance: 0,
-    name: "User 1",
-  },
-  {
-    id: 456,
-    username: "user2",
-    email: "user2@example.com",
-    password: "password2",
-    creditLimit: 2000,
-    availableCredit: 2000,
-    payableBalance: 0,
-    name: "User 2",
-  },
-  {
-    id: 789,
-    username: "user3",
-    email: "user3@example.com",
-    password: "password3",
-    creditLimit: 3000,
-    availableCredit: 3000,
-    payableBalance: 0,
-    name: "User 3",
-  },
-];
+import { testCreditLimits } from "./pseudoDb";
 
 type CreditService = {
   //   getCreditSummary: (userId: string) => CreditSummary | null;

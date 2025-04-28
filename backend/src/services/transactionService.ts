@@ -1,41 +1,7 @@
 import { EventType, Transaction } from "../models/transactionModel";
 import { TransactionError } from "../utils/errorUtils";
 import creditService from "./creditService";
-
-const testTransactions: Transaction[] = [
-  {
-    id: 1,
-    txnId: "1",
-    amount: 100,
-    userId: 123,
-    type: EventType.TXN_AUTHED,
-    time: 1,
-  },
-  {
-    id: 2,
-    txnId: "1",
-    amount: 200,
-    userId: 123,
-    type: EventType.TXN_SETTLED,
-    time: 2,
-  },
-  {
-    id: 3,
-    txnId: "2",
-    amount: 300,
-    userId: 789,
-    type: EventType.TXN_AUTHED,
-    time: 2,
-  },
-  {
-    id: 4,
-    txnId: "2",
-    amount: 300,
-    userId: 789,
-    type: EventType.TXN_SETTLED,
-    time: 3,
-  },
-];
+import { testTransactions } from "./pseudoDb";
 
 type TransactionService = {
   getTransactionsByUserId: (req: {
