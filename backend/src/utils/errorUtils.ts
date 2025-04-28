@@ -1,4 +1,4 @@
-import { EventType } from "../models/TransactionModel";
+import { EventType } from "../models/transactionModel";
 
 export class TransactionError extends Error {
   public readonly txnId: string;

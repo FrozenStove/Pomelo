@@ -1,4 +1,3 @@
-import { CreditSummary, Transaction } from "../models/TransactionModel";
 import { User } from "../models/userModel";
 
 const testCreditLimits: User[] = [

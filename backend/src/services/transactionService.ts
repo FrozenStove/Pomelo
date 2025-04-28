@@ -1,8 +1,4 @@
-import {
-  EventType,
-  Transaction,
-  TransactionInput,
-} from "../models/TransactionModel";
+import { EventType, Transaction } from "../models/transactionModel";
 import { TransactionError } from "../utils/errorUtils";
 import creditService from "./creditService";
 

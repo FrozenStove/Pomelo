@@ -1,5 +1,3 @@
-import { Transaction } from "./TransactionModel";
-
 export type User = {
   id: number;
   name: string;
